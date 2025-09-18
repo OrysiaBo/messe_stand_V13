@@ -50,7 +50,7 @@ class ElementStyle:
 class ContentElement:
     """Базовий клас для всіх елементів контенту"""
     
-    def __init__(self, element_id=None, element_type="text", x=0, y=0, width=100, height=50):
+    def __init__(self, element_id=None, element_type="text", x=0, y=0, width=100, height=50, **kwargs):
         self.id = element_id or str(uuid.uuid4())
         self.type = element_type
         self.x = float(x)
@@ -73,6 +73,11 @@ class ContentElement:
             'duration': 1000,
             'delay': 0
         }
+        
+        # Додаткові параметри з kwargs
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
     
     def update_position(self, x: float, y: float) -> None:
         """Оновити позицію елементу"""
@@ -119,13 +124,14 @@ class ContentElement:
     @classmethod
     def from_base_dict(cls, data: Dict[str, Any]) -> 'ContentElement':
         """Базове відновлення зі словника"""
-        element = cls()
-        element.id = data.get('id', str(uuid.uuid4()))
-        element.type = data.get('type', 'text')
-        element.x = float(data.get('x', 0))
-        element.y = float(data.get('y', 0))
-        element.width = float(data.get('width', 100))
-        element.height = float(data.get('height', 50))
+        element = cls(
+            element_id=data.get('id', str(uuid.uuid4())),
+            element_type=data.get('type', 'text'),
+            x=float(data.get('x', 0)),
+            y=float(data.get('y', 0)),
+            width=float(data.get('width', 100)),
+            height=float(data.get('height', 50))
+        )
         element.z_index = data.get('z_index', 0)
         element.visible = data.get('visible', True)
         element.locked = data.get('locked', False)
@@ -164,12 +170,12 @@ class ContentElement:
 class TextElement(ContentElement):
     """Текстовий елемент"""
     
-    def __init__(self, text="", font_family="Arial", font_size=16, **kwargs):
+    def __init__(self, text="", font_family="Arial", font_size=16, font_weight="normal", **kwargs):
         super().__init__(element_type="text", **kwargs)
         self.text = str(text)
         self.font_family = font_family
         self.font_size = int(font_size)
-        self.font_weight = "normal"  # normal, bold, lighter, bolder
+        self.font_weight = font_weight  # normal, bold, lighter, bolder
         self.font_style = "normal"   # normal, italic, oblique
         self.text_align = "left"     # left, center, right, justify
         self.text_decoration = "none" # none, underline, line-through, overline
@@ -227,14 +233,15 @@ class TextElement(ContentElement):
         element = cls(
             text=data.get('text', ''),
             font_family=data.get('font_family', 'Arial'),
-            font_size=data.get('font_size', 16)
+            font_size=data.get('font_size', 16),
+            font_weight=data.get('font_weight', 'normal')
         )
         
         # Базові властивості
         base_element = ContentElement.from_base_dict(data)
         element.__dict__.update(base_element.__dict__)
         
-        # Специфічні текстові властивості
+        # Специфічні текстові властивості  
         element.font_weight = data.get('font_weight', 'normal')
         element.font_style = data.get('font_style', 'normal')
         element.text_align = data.get('text_align', 'left')
